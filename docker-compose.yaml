@@ -1,0 +1,86 @@
+# docker-compose.yml (at the root level)
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: wristsight-backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+      - ./backend/logs:/app/logs
+      - ./storage:/app/storage
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/wristsight
+      - DATABASE_HOST=db
+      - DATABASE_PORT=5432
+      - APPLY_MIGRATIONS=true
+      - SECRET_KEY=${SECRET_KEY:-secretkey123}
+      - DEBUG=true
+      - CORS_ORIGINS=http://localhost:3000,http://frontend:3000
+      - USE_MOCK_MODEL=true
+    depends_on:
+      - db
+    networks:
+      - wristsight-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: wristsight-frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api/v1
+    networks:
+      - wristsight-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  inference:
+    build:
+      context: ./inference
+      dockerfile: Dockerfile
+    container_name: wristsight-inference
+    volumes:
+      - ./inference:/app
+      - ./storage:/app/storage
+    ports:
+      - "8001:8001"
+    environment:
+      - MODEL_PATH=/app/models/latest
+      - LOG_LEVEL=info
+    networks:
+      - wristsight-network
+    restart: unless-stopped
+
+  db:
+    image: postgres:14
+    container_name: wristsight-db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=wristsight
+    ports:
+      - "5432:5432"
+    networks:
+      - wristsight-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  wristsight-network:
+    driver: bridge

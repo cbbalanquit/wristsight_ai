@@ -1,1 +1,13 @@
 .venv
+
+*pycache*
+
+*.db
+
+.pytest_cache
+
+static/images
+static/results
+
+backend/static/images
+backend/static/results
