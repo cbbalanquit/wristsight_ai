@@ -99,7 +99,20 @@ function displayImages(analysisData) {
   
   // Set image sources
   if (hasAp) {
-    apAnalysisImage.src = analysisData.ap_image_url;
+    // Create a proper URL regardless of what the API returned
+    // Extract the file ID from the URL or use a fallback
+    let imageId = analysisData.analysis_id || 'default';
+    
+    // If ap_image_url contains a path with an ID, extract it
+    if (analysisData.ap_image_url && analysisData.ap_image_url.includes('/images/')) {
+      const match = analysisData.ap_image_url.match(/\/images\/([^\/]+)/);
+      if (match && match[1]) {
+        imageId = match[1];
+      }
+    }
+    
+    // Force the URL to be an HTTP URL with the correct host
+    apAnalysisImage.src = `http://localhost:8000/static/images/${imageId}/ap.jpg`;
     apImageWrapper.classList.remove('hidden');
     
     // Add landmarks, lines, and measurements
@@ -109,7 +122,17 @@ function displayImages(analysisData) {
   }
   
   if (hasLat) {
-    latAnalysisImage.src = analysisData.lat_image_url;
+    // Similar approach for lateral image
+    let imageId = analysisData.analysis_id || 'default';
+    
+    if (analysisData.lat_image_url && analysisData.lat_image_url.includes('/images/')) {
+      const match = analysisData.lat_image_url.match(/\/images\/([^\/]+)/);
+      if (match && match[1]) {
+        imageId = match[1];
+      }
+    }
+    
+    latAnalysisImage.src = `http://localhost:8000/static/images/${imageId}/lat.jpg`;
     latImageWrapper.classList.remove('hidden');
     
     // Add landmarks, lines, and measurements
