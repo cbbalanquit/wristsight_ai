@@ -75,7 +75,7 @@ function updateMeasurementsTable(analysisData) {
     
     // Measurement name
     const nameCell = document.createElement('td');
-    nameCell.textContent = measurement.name;
+    nameCell.textContent = measurement.label;
     row.appendChild(nameCell);
     
     // Measurement value
