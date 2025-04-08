@@ -1,0 +1,62 @@
+/* src/components/Analysis/AnalysisControls.css */
+.analysis-controls {
+    background-color: white;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+  
+  .analysis-controls h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: #333;
+  }
+  
+  .control-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .control-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .control-item label {
+    font-size: 0.9rem;
+    color: #555;
+  }
+  
+  .analysis-info {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eee;
+  }
+  
+  .info-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+  
+  .info-label {
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .info-value {
+    color: #333;
+  }
+  
+  .info-item.notes {
+    flex-direction: column;
+  }
+  
+  .info-item.notes .info-value {
+    margin-top: 0.25rem;
+    white-space: pre-wrap;
+  }

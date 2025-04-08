@@ -1,0 +1,12 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: auto;
+}
+
+.main-content {
+  flex: 1;
+  padding: 1rem;
+  overflow: auto; /* Changed from auto to hidden */
+}

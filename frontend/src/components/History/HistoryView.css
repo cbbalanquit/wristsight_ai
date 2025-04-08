@@ -1,0 +1,84 @@
+/* src/components/History/HistoryView.css */
+.history-container {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 70px);
+  overflow: auto;
+  padding: 1rem;
+}
+
+.patient-history {
+  background-color: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+}
+
+.patient-history h2 {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+#history-table-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+}
+
+/* Change this to allow scrolling in the history content */
+.history-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* Change from overflow: hidden to overflow: auto */
+  /* This allows scrolling when content exceeds container height */
+  overflow: auto;
+}
+
+.history-table-wrapper {
+  flex: 1;
+  /* Keep auto overflow here to allow scrolling within the table */
+  overflow: auto;
+  min-height: 0; /* Required for Firefox */
+}
+
+.empty-history {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  color: #999;
+  font-style: italic;
+}
+
+.history-table {
+  margin-bottom: 30px;
+}
+
+/* Add a max-height to the table wrapper to ensure it doesn't grow too large */
+@media (min-height: 900px) {
+  .history-table-wrapper {
+    max-height: calc(100vh - 300px); /* Adjust value as needed */
+  }
+}
+
+/* Responsive adjustments */
+@media (max-height: 800px) {
+  .patient-history {
+    padding: 1rem;
+  }
+
+  .patient-history h2 {
+    margin-bottom: 1rem;
+  }
+  
+  .history-table-wrapper {
+    max-height: calc(100vh - 250px); /* Smaller max-height for smaller screens */
+  }
+}

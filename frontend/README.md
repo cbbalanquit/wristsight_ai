@@ -1,94 +1,70 @@
-# WristSight AI Frontend
+# Getting Started with Create React App
 
-A web application for radiologists and orthopedic doctors to analyze X-ray images using automated radiographic measurements.
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
-## Overview
+## Available Scripts
 
-WristSight AI provides an intuitive interface to:
-- Upload AP and lateral X-ray images
-- View automated radiographic measurements and analysis
-- Compare measurements to normal ranges
-- Access patient history and previous analyses
-- Export and share analysis results
+In the project directory, you can run:
 
-## Setup Instructions
+### `npm start`
 
-### Prerequisites
+Runs the app in the development mode.\
+Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
 
-- A running WristSight AI backend server (FastAPI)
-- A modern web browser (Chrome, Firefox, Safari, Edge)
+The page will reload when you make changes.\
+You may also see any lint errors in the console.
 
-### Installation
+### `npm test`
 
-1. Clone this repository:
-```bash
-git clone https://github.com/yourusername/wristsight-frontend.git
-cd wristsight-frontend
-```
+Launches the test runner in the interactive watch mode.\
+See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
 
-2. Set up the project structure:
-```bash
-mkdir -p css js assets
-```
+### `npm run build`
 
-3. Copy the provided files into the appropriate directories:
-- HTML file in the root directory
-- CSS files in the `css` directory
-- JavaScript files in the `js` directory
-- Assets (like logo.svg) in the `assets` directory
+Builds the app for production to the `build` folder.\
+It correctly bundles React in production mode and optimizes the build for the best performance.
 
-4. Configure the API connection:
-Open `js/api.js` and update the `API_BASE_URL` to match your backend server:
-```javascript
-const API_BASE_URL = 'http://localhost:8000/api';
-```
+The build is minified and the filenames include the hashes.\
+Your app is ready to be deployed!
 
-### Running the Application
+See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
-Since this is a simple HTML/CSS/JavaScript application, you can:
+### `npm run eject`
 
-1. Open the `index.html` file directly in your browser
-2. Use any basic web server to serve the files
+**Note: this is a one-way operation. Once you `eject`, you can't go back!**
 
-Example using Python's built-in HTTP server:
-```bash
-python -m http.server 8080
-```
+If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
 
-Then visit `http://localhost:8080` in your browser.
+Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
 
-## Backend Integration
+You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
 
-This frontend is designed to work with the WristSight AI FastAPI backend. Make sure your backend server:
+## Learn More
 
-1. Is running and accessible
-2. Has CORS enabled to allow requests from the frontend
-3. Implements the expected API endpoints:
-   - `POST /api/analyses` - Create a new analysis
-   - `GET /api/analyses/{analysis_id}` - Get analysis details
-   - `DELETE /api/analyses/{analysis_id}` - Delete an analysis
-   - `GET /api/history` - Get analysis history
-   - `GET /api/patients/{patient_id}/history` - Get patient history
+You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
 
-## Development
+To learn React, check out the [React documentation](https://reactjs.org/).
 
-For development and testing, the application includes a "Load Mock Data" button (visible when running locally) that populates the UI with sample data to help visualize the interface without needing to upload real images.
+### Code Splitting
 
-## Structure
+This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
 
-- `index.html` - Main HTML structure
-- `css/styles.css` - Main stylesheet
-- `js/api.js` - API communication functions
-- `js/app.js` - Main application logic
-- `js/upload.js` - X-ray image upload functionality
-- `js/analysis.js` - Analysis view functionality
-- `js/controls.js` - Analysis controls functionality 
-- `js/measurements.js` - Measurements table functionality
-- `js/history.js` - Patient history functionality
+### Analyzing the Bundle Size
 
-## Customization
+This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
 
-You can customize the application by:
-- Modifying the CSS in `css/styles.css` for appearance changes
-- Updating the API endpoint URLs in `js/api.js`
-- Adding additional features by extending the JavaScript modules
+### Making a Progressive Web App
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+
+### Advanced Configuration
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+
+### Deployment
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+
+### `npm run build` fails to minify
+
+This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
