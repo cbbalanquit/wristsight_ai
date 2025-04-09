@@ -143,13 +143,15 @@ const HistoryView = () => {
               <p>No analysis records found</p>
             </div>
           ) : (
-            <div id="history-content" className="history-content">
-              <HistoryTable 
-                records={getCurrentRecords()}
-                loading={loading}
-              />
+            <>
+              <div className="table-scroll-container">
+                <HistoryTable 
+                  records={getCurrentRecords()}
+                  loading={loading}
+                />
+              </div>
               
-              <div className="pagination">
+              <div className="pagination-container">
                 <button 
                   id="prev-page-btn" 
                   className="page-btn" 
@@ -172,7 +174,7 @@ const HistoryView = () => {
                   <i className="fas fa-chevron-right"></i>
                 </button>
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>

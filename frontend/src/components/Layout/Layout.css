@@ -1,12 +1,18 @@
 .app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: auto;
+  min-height: 100vh;
+  overflow: visible;
+}
+
+.header-container {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
 }
 
 .main-content {
   flex: 1;
   padding: 1rem;
-  overflow: auto; /* Changed from auto to hidden */
 }

@@ -33,10 +33,12 @@ const Layout = ({ children, apiStatus, retryConnection }) => {
     <div className="app">
       {renderApiError()}
       
-      <Header 
-        currentTab={currentTab} 
-        onTabChange={handleTabChange} 
-      />
+      <div className="header-container">
+        <Header 
+          currentTab={currentTab} 
+          onTabChange={handleTabChange} 
+        />
+      </div>
       
       <main className="main-content">
         {children}

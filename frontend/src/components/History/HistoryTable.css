@@ -1,16 +1,14 @@
 /* src/components/History/HistoryTable.css */
 .history-table-wrapper {
-    flex: 1;
-    overflow: auto;
-    min-height: 0; /* Required for Firefox to honor overflow property */
-    margin-bottom: 1rem;
-    padding-bottom: 20px;
-  }
+  width: 100%;
+  margin-bottom: 0; /* Remove margin since container handles this */
+  padding-bottom: 0; /* Remove padding */
+}
   
   .history-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 20px;
+    margin-bottom: 0;
   }
   
   .history-table th,
@@ -27,6 +25,7 @@
     position: sticky;
     top: 0;
     z-index: 1;
+    box-shadow: 0 2px 2px -1px rgba(0,0,0,0.1);
   }
   
   .history-table tr:hover {

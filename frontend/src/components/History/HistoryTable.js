@@ -36,7 +36,7 @@ const HistoryTable = ({ records, loading }) => {
   return (
     <div className="history-table-wrapper">
       <table className="history-table">
-        <thead>
+        <thead className="fixed-header">
           <tr>
             <th>Patient ID</th>
             <th>Date</th>
