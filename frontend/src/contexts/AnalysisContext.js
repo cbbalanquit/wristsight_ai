@@ -45,8 +45,36 @@ export const AnalysisProvider = ({ children }) => {
     setViewState(prev => ({ ...prev, zoomLevel: 1 }));
   };
   
+  // Enhanced clearAnalysis function to reset all analysis-related state
   const clearAnalysis = () => {
+    console.log('Clearing all analysis state...');
+    
+    // Clear current analysis
     setCurrentAnalysis(null);
+    
+    // Reset view state to defaults
+    setViewState({
+      currentView: 'both',
+      zoomLevel: 1,
+    });
+    
+    // Reset upload state
+    setUploadState({
+      apImage: null,
+      latImage: null,
+      patientId: '',
+      notes: '',
+    });
+    
+    // Clear any stored analysis data in localStorage/sessionStorage
+    try {
+      localStorage.removeItem('currentAnalysis');
+      sessionStorage.removeItem('analysisState');
+    } catch (e) {
+      console.error('Error clearing stored analysis data:', e);
+    }
+    
+    console.log('Analysis state has been reset');
   };
   
   // Add a custom setCurrentAnalysis wrapper that ensures image flags are set

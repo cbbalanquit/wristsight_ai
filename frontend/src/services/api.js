@@ -3,8 +3,103 @@
  * Handles all communication with the backend API
  */
 
-// API Base URL - replace with your actual API URL
+import axios from 'axios';
+
 const API_BASE_URL = 'http://localhost:8000/api';
+
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// Add request interceptor to inject token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add response interceptor to handle authentication errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Handle 401 Unauthorized errors
+    if (error.response && error.response.status === 401) {
+      localStorage.removeItem('token');
+      // Redirect to login page if not already there
+      if (window.location.pathname !== '/login') {
+        window.location.href = '/login';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+/**
+ * Authentication API Methods
+ */
+
+/**
+ * Login user
+ * @param {string} username - Username or email
+ * @param {string} password - User password
+ * @returns {Promise<Object>} - Response with access token
+ */
+export const loginUser = async (username, password) => {
+  try {
+    // FastAPI OAuth2 expects form data
+    const formData = new FormData();
+    formData.append('username', username);
+    formData.append('password', password);
+
+    const response = await axios.post(`${API_BASE_URL}/auth/login`, formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+    
+    return response.data;
+  } catch (error) {
+    console.error('Login error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Register a new user
+ * @param {Object} userData - User registration data
+ * @returns {Promise<Object>} - New user data
+ */
+export const registerUser = async (userData) => {
+  try {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  } catch (error) {
+    console.error('Registration error:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get current user profile
+ * @returns {Promise<Object>} - User profile data
+ */
+export const getCurrentUser = async () => {
+  try {
+    const response = await api.get('/auth/me');
+    return response.data;
+  } catch (error) {
+    console.error('Get current user error:', error);
+    throw error;
+  }
+};
 
 /**
  * Run analysis on X-ray images
@@ -18,6 +113,9 @@ export const runAnalysis = async (formData) => {
     const submitResponse = await fetch(`${API_BASE_URL}/analyses`, {
       method: 'POST',
       body: formData,
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
     });
     
     if (!submitResponse.ok) {
@@ -30,7 +128,11 @@ export const runAnalysis = async (formData) => {
     // Step 2: Get the full analysis results using the returned ID
     if (submitData.analysis_id) {
       console.log('Fetching full analysis results for ID:', submitData.analysis_id);
-      const analysisResponse = await fetch(`${API_BASE_URL}/analyses/${submitData.analysis_id}`);
+      const analysisResponse = await fetch(`${API_BASE_URL}/analyses/${submitData.analysis_id}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
       
       if (!analysisResponse.ok) {
         throw new Error(`API error: ${analysisResponse.status} ${analysisResponse.statusText}`);
@@ -70,7 +172,11 @@ export const fetchPatientHistory = async (params = {}) => {
     
     const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
     
-    const response = await fetch(`${API_BASE_URL}/history${queryString}`);
+    const response = await fetch(`${API_BASE_URL}/history${queryString}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
     
     if (!response.ok) {
       throw new Error(`API error: ${response.status} ${response.statusText}`);
