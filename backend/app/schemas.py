@@ -43,7 +43,7 @@ class AnalysisSummary(BaseModel):
     id: str
     patient_id: str
     timestamp: datetime
-    thumbnail_url: Optional[str] = None
+    image_urls: Optional[Dict] = None
     summary: str
     status: str
     

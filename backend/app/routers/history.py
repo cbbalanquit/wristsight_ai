@@ -54,35 +54,30 @@ async def get_analysis_history(
         results = []
         for analysis in analyses:
             try:
-                # Load analysis result for summary
                 analysis_result = load_analysis_result(analysis.result_path)
                 summary = analysis_result.get("summary", "No summary available")
                 
-                # Determine thumbnail URL
-                if analysis.ap_image_path:
-                    thumbnail_url = f"/static/images/{analysis.id}/ap.jpg"
-                elif analysis.lat_image_path:
-                    thumbnail_url = f"/static/images/{analysis.id}/lat.jpg"
-                else:
-                    thumbnail_url = None
-                
-                # Add to results
+                image_urls = {
+                    "ap_image_url": f"/static/images/{analysis.id}/ap.jpg" if analysis.ap_image_path else None,
+                    "lat_image_url": f"/static/images/{analysis.id}/lat.jpg" if analysis.lat_image_path else None
+                }
+
                 results.append({
                     "id": analysis.id,
                     "patient_id": analysis.patient_id,
                     "timestamp": analysis.timestamp,
-                    "thumbnail_url": thumbnail_url,
+                    "image_urls": image_urls,
                     "summary": summary,
                     "status": analysis.status
                 })
             except Exception as e:
                 logger.error(f"Error processing analysis {analysis.id}: {str(e)}")
-                # Still include the analysis in results but with minimal info
+
                 results.append({
                     "id": analysis.id,
                     "patient_id": analysis.patient_id,
                     "timestamp": analysis.timestamp,
-                    "thumbnail_url": None,
+                    "image_urls": None,
                     "summary": "Error retrieving summary",
                     "status": analysis.status
                 })
