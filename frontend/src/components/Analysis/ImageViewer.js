@@ -35,6 +35,19 @@ const ImageViewer = () => {
     });
   }, [currentView, hasAp, hasLat]);
 
+  useEffect(() => {
+    if (currentAnalysis) {
+      console.log('ImageViewer received analysis:', {
+        id: currentAnalysis.id,
+        has_ap: currentAnalysis.has_ap,
+        has_lat: currentAnalysis.has_lat,
+        ap_image_url: currentAnalysis.ap_image_url,
+        lat_image_url: currentAnalysis.lat_image_url,
+        original_image_urls: currentAnalysis.image_urls
+      });
+    }
+  }, [currentAnalysis]);
+
   // Generate mock landmarks, lines, and measurements for demonstration
   const generateMockLandmarks = (view) => {
     if (view === 'ap') {

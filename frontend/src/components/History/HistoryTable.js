@@ -10,6 +10,7 @@ const HistoryTable = ({ records, loading }) => {
   const navigate = useNavigate();
   
   const handleViewAnalysis = (record) => {
+    console.log('Record being viewed:', record);
     setCurrentAnalysis(record);
     switchTab('analysis');
     navigate('/');

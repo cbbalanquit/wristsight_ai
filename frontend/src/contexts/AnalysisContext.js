@@ -59,15 +59,20 @@ export const AnalysisProvider = ({ children }) => {
     // Create a copy to avoid modifying the original
     const updatedAnalysis = { ...analysisData };
     
-    // Ensure has_ap and has_lat flags are set if image URLs exist
-    if (updatedAnalysis.ap_image_url && !updatedAnalysis.has_ap) {
-      console.log('Setting has_ap flag based on ap_image_url');
-      updatedAnalysis.has_ap = true;
-    }
-    
-    if (updatedAnalysis.lat_image_url && !updatedAnalysis.has_lat) {
-      console.log('Setting has_lat flag based on lat_image_url');
-      updatedAnalysis.has_lat = true;
+    // Check if image_urls exists and has image URLs
+    if (updatedAnalysis.image_urls) {
+      // Extract the image URLs directly from the image_urls object
+      updatedAnalysis.ap_image_url = updatedAnalysis.image_urls.ap_image_url;
+      updatedAnalysis.lat_image_url = updatedAnalysis.image_urls.lat_image_url;
+      
+      // Set the flags based on the presence of URLs
+      updatedAnalysis.has_ap = !!updatedAnalysis.ap_image_url;
+      updatedAnalysis.has_lat = !!updatedAnalysis.lat_image_url;
+      
+      console.log('Updated image URLs from image_urls:', {
+        ap: updatedAnalysis.ap_image_url,
+        lat: updatedAnalysis.lat_image_url
+      });
     }
     
     setCurrentAnalysis(updatedAnalysis);
