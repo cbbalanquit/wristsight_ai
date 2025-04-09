@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import logging
 
 from app.database import get_db
-from app.models import Analysis
+from app.models import Analysis, UserRole, User
 from app.schemas import AnalysisResponse, AnalysisDetail
 from app.utils import (
     save_uploaded_file,
@@ -16,6 +16,7 @@ from app.utils import (
     cleanup_analysis_files
 )
 from app.config import settings
+from app import auth_utils  # Import the auth utilities
 
 # Create router
 router = APIRouter()
@@ -30,7 +31,8 @@ async def create_analysis(
     lat_image: Optional[UploadFile] = File(None),
     patient_id: str = Form(...),
     notes: Optional[str] = Form(None),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.get_current_user)  # Add authentication
 ):
     """
     Create a new X-ray analysis.
@@ -46,7 +48,7 @@ async def create_analysis(
     
     # Generate analysis ID
     analysis_id = generate_analysis_id()
-    logger.info(f"Creating analysis {analysis_id} for patient {patient_id}")
+    logger.info(f"Creating analysis {analysis_id} for patient {patient_id} by user {current_user.username}")
     
     # Create directories for this analysis
     analysis_dir = os.path.join(settings.IMAGES_DIR, analysis_id)
@@ -77,14 +79,15 @@ async def create_analysis(
         # Save results to file
         result_path = save_analysis_result(analysis_id, analysis_result)
         
-        # Save to database
+        # Save to database with user_id
         db_analysis = Analysis(
             id=analysis_id,
             patient_id=patient_id,
             ap_image_path=ap_path,
             lat_image_path=lat_path,
             result_path=result_path,
-            notes=notes
+            notes=notes,
+            user_id=current_user.id  # Associate with current user
         )
         db.add(db_analysis)
         db.commit()
@@ -101,7 +104,11 @@ async def create_analysis(
         )
 
 @router.get("/analyses/{analysis_id}", response_model=AnalysisDetail)
-async def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
+async def get_analysis(
+    analysis_id: str, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.get_current_user)  # Add authentication
+):
     """
     Get detailed analysis results by ID.
     """
@@ -112,6 +119,13 @@ async def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found"
+        )
+    
+    # Check if user has permission to access this analysis
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERUSER] and analysis.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to access this analysis"
         )
     
     try:
@@ -132,7 +146,8 @@ async def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
             "notes": analysis.notes,
             "status": analysis.status,
             "measurements": analysis_result.get("measurements", []),
-            "summary": analysis_result.get("summary", "No summary available")
+            "summary": analysis_result.get("summary", "No summary available"),
+            "user_id": analysis.user_id  # Include user_id in response
         }
         
         return result
@@ -145,7 +160,11 @@ async def get_analysis(analysis_id: str, db: Session = Depends(get_db)):
         )
 
 @router.delete("/analyses/{analysis_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_analysis(analysis_id: str, db: Session = Depends(get_db)):
+async def delete_analysis(
+    analysis_id: str, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.get_current_user)  # Add authentication
+):
     """
     Delete an analysis and associated files.
     """
@@ -155,6 +174,13 @@ async def delete_analysis(analysis_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Analysis with ID {analysis_id} not found"
+        )
+    
+    # Check if user has permission to delete this analysis
+    if current_user.role not in [UserRole.ADMIN, UserRole.SUPERUSER] and analysis.user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this analysis"
         )
     
     try:
@@ -170,4 +196,57 @@ async def delete_analysis(analysis_id: str, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error deleting analysis: {str(e)}"
+        )
+
+@router.get("/analyses/stats", status_code=status.HTTP_200_OK)
+async def get_analysis_stats(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.is_admin_or_superuser)  # Only admin/superuser
+):
+    """
+    Get statistics on analyses (admin/superuser only).
+    """
+    try:
+        # Total analyses count
+        total_analyses = db.query(Analysis).count()
+        
+        # Analyses by user
+        user_analyses = db.query(
+            User.username, 
+            db.func.count(Analysis.id)
+        ).join(
+            Analysis, 
+            User.id == Analysis.user_id
+        ).group_by(
+            User.username
+        ).all()
+        
+        # Analyses by patient
+        patient_analyses = db.query(
+            Analysis.patient_id,
+            db.func.count(Analysis.id)
+        ).group_by(
+            Analysis.patient_id
+        ).all()
+        
+        # Analyses by status
+        status_analyses = db.query(
+            Analysis.status,
+            db.func.count(Analysis.id)
+        ).group_by(
+            Analysis.status
+        ).all()
+        
+        return {
+            "total_analyses": total_analyses,
+            "by_user": {username: count for username, count in user_analyses},
+            "by_patient": {patient_id: count for patient_id, count in patient_analyses},
+            "by_status": {status: count for status, count in status_analyses}
+        }
+    
+    except Exception as e:
+        logger.error(f"Error in get_analysis_stats: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error getting analysis statistics: {str(e)}"
         )

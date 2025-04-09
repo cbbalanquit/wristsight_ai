@@ -6,6 +6,11 @@ load_dotenv()
 class Settings:
     APP_NAME = "WristSight AI"
 
+    # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
+    SECRET_KEY: str = "05d77b26ca61e0325100847ad13c748b49e8fa83ab1f5ef47337dcd241cb75ac" 
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
     DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./wristsight.db")
 
     IMAGES_DIR = "static/images"

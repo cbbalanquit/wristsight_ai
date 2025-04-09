@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import os
 
-from app.routers import analysis, history
+from app.routers import analysis, history, auth
 from app.config import settings
 from app.database import engine
 from app import models
@@ -30,6 +30,7 @@ app.add_middleware(
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
+app.include_router(auth.router, prefix="/api", tags=["auth"])
 app.include_router(analysis.router, prefix="/api", tags=["analysis"])
 app.include_router(history.router, prefix="/api", tags=["history"])
 

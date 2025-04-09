@@ -1,4 +1,3 @@
-# app/routers/history.py
 from typing import List, Optional
 from datetime import datetime, date
 from fastapi import APIRouter, Depends, Query, HTTPException, status
@@ -7,9 +6,10 @@ from sqlalchemy import desc
 import logging
 
 from app.database import get_db
-from app.models import Analysis
+from app.models import Analysis, UserRole, User
 from app.schemas import AnalysisSummary
 from app.utils import load_analysis_result
+from app import auth_utils  # Import the auth utilities
 
 # Create router
 router = APIRouter()
@@ -25,7 +25,8 @@ async def get_analysis_history(
     end_date: Optional[date] = Query(None, description="Filter by end date"),
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(20, ge=1, le=100, description="Number of records to return"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.get_current_user)  # Add authentication
 ):
     """
     Get analysis history with optional filtering.
@@ -34,7 +35,13 @@ async def get_analysis_history(
         # Start query
         query = db.query(Analysis)
         
-        # Apply filters
+        # Apply role-based filtering
+        # Admin and superusers can see all analyses
+        if current_user.role not in [UserRole.ADMIN, UserRole.SUPERUSER]:
+            # Normal users can only see their own analyses
+            query = query.filter(Analysis.user_id == current_user.id)
+        
+        # Apply additional filters
         if patient_id:
             query = query.filter(Analysis.patient_id == patient_id)
         
@@ -68,7 +75,8 @@ async def get_analysis_history(
                     "timestamp": analysis.timestamp,
                     "image_urls": image_urls,
                     "summary": summary,
-                    "status": analysis.status
+                    "status": analysis.status,
+                    "user_id": analysis.user_id
                 })
             except Exception as e:
                 logger.error(f"Error processing analysis {analysis.id}: {str(e)}")
@@ -79,7 +87,8 @@ async def get_analysis_history(
                     "timestamp": analysis.timestamp,
                     "image_urls": None,
                     "summary": "Error retrieving summary",
-                    "status": analysis.status
+                    "status": analysis.status,
+                    "user_id": analysis.user_id
                 })
         
         return results
@@ -95,16 +104,23 @@ async def get_analysis_history(
 async def get_patient_history(
     patient_id: str,
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.get_current_user)  # Add authentication
 ):
     """
     Get all analysis records for a specific patient.
     """
     try:
-        # Get analyses for this patient
-        analyses = db.query(Analysis).filter(
-            Analysis.patient_id == patient_id
-        ).order_by(desc(Analysis.timestamp)).limit(limit).all()
+        # Start query for this patient
+        query = db.query(Analysis).filter(Analysis.patient_id == patient_id)
+        
+        # Apply role-based filtering
+        if current_user.role not in [UserRole.ADMIN, UserRole.SUPERUSER]:
+            # Normal users can only see their own analyses
+            query = query.filter(Analysis.user_id == current_user.id)
+        
+        # Get analyses with ordering and limit
+        analyses = query.order_by(desc(Analysis.timestamp)).limit(limit).all()
         
         # Process results (reuse logic from previous endpoint)
         results = []
@@ -150,4 +166,34 @@ async def get_patient_history(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error retrieving patient history: {str(e)}"
+        )
+
+# Add this new endpoint to get all patients accessible to the user
+@router.get("/patients", response_model=List[str])
+async def get_accessible_patients(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(auth_utils.get_current_user)
+):
+    """
+    Get all patient IDs accessible to the current user.
+    """
+    try:
+        # Start query
+        query = db.query(Analysis.patient_id).distinct()
+        
+        # Apply role-based filtering
+        if current_user.role not in [UserRole.ADMIN, UserRole.SUPERUSER]:
+            # Normal users can only see their own patients
+            query = query.filter(Analysis.user_id == current_user.id)
+        
+        # Get unique patient IDs
+        patient_ids = [row[0] for row in query.all()]
+        
+        return patient_ids
+    
+    except Exception as e:
+        logger.error(f"Error in get_accessible_patients: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving patients: {str(e)}"
         )

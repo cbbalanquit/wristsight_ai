@@ -1,6 +1,50 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from enum import Enum
+
+# Define enum for role validation in Pydantic models
+class UserRole(str, Enum):
+    ADMIN = "ADMIN"
+    SUPERUSER = "SUPERUSER"
+    NORMAL = "NORMAL"
+
+# User schemas
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    password: str
+    # By default, new users will be normal users
+
+class UserOut(BaseModel):
+    id: int
+    email: EmailStr
+    username: str
+    role: UserRole
+    is_active: bool
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
+
+class UserLogin(BaseModel):
+    email_or_username: str
+    password: str
+
+class UserUpdate(BaseModel):
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class UserRoleUpdate(BaseModel):
+    role: UserRole
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    id: Optional[int] = None
 
 # Analysis schemas
 class AnalysisBase(BaseModel):
@@ -35,6 +79,7 @@ class AnalysisDetail(BaseModel):
     summary: str
     status: str
     notes: Optional[str] = None
+    user_id: int
     
     class Config:
         orm_mode = True
@@ -46,6 +91,7 @@ class AnalysisSummary(BaseModel):
     image_urls: Optional[Dict] = None
     summary: str
     status: str
+    user_id: int
     
     class Config:
         orm_mode = True
