@@ -2,6 +2,9 @@ import React, { useEffect } from 'react';
 import { useAnalysis } from '../../contexts/AnalysisContext';
 import './ImageViewer.css';
 
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 const ImageViewer = () => {
   const { 
     currentAnalysis, 
@@ -21,9 +24,190 @@ const ImageViewer = () => {
   const hasLat = currentAnalysis?.has_lat;
 
   // Export PDF function
-  const handleExportPdf = () => {
-    console.log('Export as PDF clicked');
-    // Implement export functionality
+  const handleExportPdf = async () => {
+    const pdf = new jsPDF('portrait', 'mm', 'a4');
+  
+    try {
+      // Set up PDF title
+      pdf.setFontSize(16);
+      pdf.text('WristSight AI Analysis Report', 105, 15, { align: 'center' });
+      pdf.setFontSize(12);
+      pdf.text(`Patient ID: ${currentAnalysis.patient_id || 'Unknown'}`, 105, 25, { align: 'center' });
+      pdf.text(`Date: ${new Date().toLocaleDateString()}`, 105, 30, { align: 'center' });
+      
+      let yPosition = 40;
+      
+      // Capture the measurements table
+      const measurementsElement = document.getElementById('table-wrapper');
+      if (measurementsElement) {
+        const measCanvas = await html2canvas(measurementsElement);
+        const measImage = measCanvas.toDataURL('image/png');
+        const measRatio = measCanvas.width / measCanvas.height;
+        const measWidth = 180; // mm
+        const measHeight = measWidth / measRatio;
+        
+        pdf.text('Measurements:', 15, yPosition);
+        yPosition += 5;
+        pdf.addImage(measImage, 'PNG', 15, yPosition, measWidth, measHeight);
+        yPosition += measHeight + 10;
+      }
+
+      // Check if we need to add a new page for images
+      if (yPosition > 200) {
+        pdf.addPage();
+        yPosition = 20;
+      }
+  
+      // Capture and add AP image if available
+      if (hasAp) {
+        const apImageElement = document.getElementById('ap-analysis-image');
+        if (apImageElement) {
+          pdf.text('AP View:', 15, yPosition);
+          yPosition += 5;
+          
+          const apCanvas = await html2canvas(apImageElement);
+          const apImage = apCanvas.toDataURL('image/png');
+          
+          // Get AP calibration (same for X and Y)
+          const apMmPerPixel = currentAnalysis?.calibration?.ap?.mm_per_pixel || 0.144;
+          console.log('apMmPerPixel:', apMmPerPixel);
+          
+          // Calculate physical dimensions based on calibration
+          const apWidthPixels = apCanvas.width;
+          const apHeightPixels = apCanvas.height;
+          const apWidthMm = apWidthPixels * apMmPerPixel;
+          const apHeightMm = apHeightPixels * apMmPerPixel;
+          
+          // Scale to fit page width while maintaining true aspect ratio
+          const maxWidthMm = 180;
+          let scaleFactor = 1;
+          
+          if (apWidthMm > maxWidthMm) {
+            scaleFactor = maxWidthMm / apWidthMm;
+          }
+          
+          const finalWidthMm = apWidthMm * scaleFactor;
+          const finalHeightMm = apHeightMm * scaleFactor;
+          
+          pdf.addImage(apImage, 'PNG', 15, yPosition, finalWidthMm, finalHeightMm);
+          
+          // Add calibration scale for AP view
+          const scaleY = yPosition + finalHeightMm + 5;
+          addCalibrationScale(pdf, 15, scaleY, 100, 'AP', scaleFactor);
+          
+          yPosition += finalHeightMm + 15; // Extra space for the scale
+        }
+      }
+      
+      // Add new page if needed for the lateral image
+      if (hasLat) {
+        if (yPosition > 200) {
+          pdf.addPage();
+          yPosition = 20;
+        }
+        
+        // Capture the Lateral image
+        const latImageElement = document.getElementById('lat-analysis-image');
+        if (latImageElement) {
+          pdf.text('Lateral View:', 15, yPosition);
+          yPosition += 5;
+          
+          const latCanvas = await html2canvas(latImageElement);
+          const latImage = latCanvas.toDataURL('image/png');
+          
+          // Get Lateral calibration (same for X and Y)
+          const latMmPerPixel = currentAnalysis?.calibration?.lateral?.mm_per_pixel || 0.144;
+          console.log('latMmPerPixel:',latMmPerPixel)
+          
+          // Calculate physical dimensions based on calibration
+          const latWidthPixels = latCanvas.width;
+          const latHeightPixels = latCanvas.height;
+          const latWidthMm = latWidthPixels * latMmPerPixel;
+          const latHeightMm = latHeightPixels * latMmPerPixel;
+          
+          // Scale to fit page width while maintaining true aspect ratio
+          const maxWidthMm = 180;
+          let scaleFactor = 1;
+          
+          if (latWidthMm > maxWidthMm) {
+            scaleFactor = maxWidthMm / latWidthMm;
+          }
+          
+          const finalWidthMm = latWidthMm * scaleFactor;
+          const finalHeightMm = latHeightMm * scaleFactor;
+          
+          pdf.addImage(latImage, 'PNG', 15, yPosition, finalWidthMm, finalHeightMm);
+          
+          // Add calibration scale for Lateral view
+          const scaleY = yPosition + finalHeightMm + 5;
+          addCalibrationScale(pdf, 15, scaleY, 100, 'Lateral', scaleFactor);
+        }
+      }
+  
+      // Save the PDF with patient ID if available
+      const fileName = currentAnalysis.patient_id 
+        ? `wristsight_analysis_${currentAnalysis.patient_id}.pdf` 
+        : 'wristsight_analysis.pdf';
+      pdf.save(fileName);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('An error occurred while exporting the PDF. Please try again.');
+    }
+  };
+  
+  // Helper function to add calibration scale with appropriate scaling factor
+  const addCalibrationScale = (pdf, x, y, width, viewType, scaleFactor = 1) => {
+    // Default to 0.144mm per pixel as specified
+    const mmPerPixel = currentAnalysis?.calibration?.[viewType.toLowerCase()]?.mm_per_pixel || 0.144;
+    
+    // Adjust for scaling applied to the image
+    const effectiveMmPerPixel = mmPerPixel / scaleFactor;
+    
+    // Draw the scale container
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setFillColor(245, 245, 245);
+    pdf.roundedRect(x, y, width, 15, 2, 2, 'FD');
+    
+    // Draw the scale line
+    pdf.setDrawColor(0, 0, 0);
+    pdf.setLineWidth(0.5);
+    pdf.line(x + 5, y + 7.5, x + width - 5, y + 7.5);
+    
+    // Calculate how much real distance this scale represents
+    const scaleWidthMm = width - 10; // Width of the actual scale line in mm on PDF
+    const realDistanceRepresented = scaleWidthMm / scaleFactor; // How many real mm this represents
+    
+    // Calculate how many cm fit in our scale
+    const cmInScale = Math.floor(realDistanceRepresented / 10); // How many complete cm
+    const mmPerUnit = scaleWidthMm / realDistanceRepresented; // PDF mm per real mm
+    
+    // Add scale information
+    pdf.setFontSize(8);
+    pdf.text(`Calibration scale (${mmPerPixel.toFixed(3)} mm/pixel)`, x + 5, y + 3);
+    
+    // Draw cm ticks and labels
+    for (let cm = 0; cm <= cmInScale; cm++) {
+      const tickPosition = x + 5 + (cm * 10 * mmPerUnit);
+      
+      // Draw cm tick (longer)
+      pdf.line(tickPosition, y + 5, tickPosition, y + 10);
+      
+      // Label cm marks
+      if (cm > 0) {
+        pdf.setFontSize(7);
+        pdf.text(`${cm} cm`, tickPosition - 3, y + 13);
+      }
+      
+      // Draw mm ticks (shorter) - but only if there's enough space
+      if (mmPerUnit > 0.8) {
+        for (let mm = 1; mm < 10; mm++) {
+          const mmPosition = tickPosition + (mm * mmPerUnit);
+          if (mmPosition < x + width - 5) {
+            pdf.line(mmPosition, y + 6, mmPosition, y + 9);
+          }
+        }
+      }
+    }
   };
 
   // Log the current view state for debugging

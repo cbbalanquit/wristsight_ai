@@ -68,7 +68,7 @@ const MeasurementsTable = () => {
         </div>
       ) : (
         <div id="measurements-content" className="measurements-content">
-          <div className="table-wrapper">
+          <div id="table-wrapper" className="table-wrapper">
             <table className="measurements-table">
               <thead>
                 <tr>
